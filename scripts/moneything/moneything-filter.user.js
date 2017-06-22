@@ -11,8 +11,8 @@
 // @match        https://www.moneything.com/p2p/index.php/Loan/invest/*
 // @grant        GM_setValue
 // @grant        GM_getValue
-// @require      file:///p2p-userscripts/includes/p2p-common.js
-// @require      ../../includes/p2p-common.js
+// @require      file:///p2p-userscripts/includes/p2p-common.user.js
+// @require      ../../includes/p2p-common.user.js
 // @require      https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js
 // ==/UserScript==
 
