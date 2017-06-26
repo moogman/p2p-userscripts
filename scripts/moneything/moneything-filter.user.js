@@ -103,7 +103,7 @@ function decorate_available_page() {
         }
 
         // Hide any loans with IR < 12%.
-        if (parseInt(this.children[rate_row].textContent) < loan_rate_min) {
+        if (parseFloat(this.children[rate_row].textContent) < loan_rate_min) {
             this.children[rate_row].style["background-color"] = '#ffdddd';
             tr.dataset.target = 'hit';
         }
