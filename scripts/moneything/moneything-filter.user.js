@@ -17,11 +17,11 @@
 // ==/UserScript==
 
 /* Start of user-editable variables */
-var target_lower = 200;                   // Buy (green) if we have less than this amount in it.
-var target_upper = 220;                   // Sell (red) if we have more than this amount in it.
 var loan_rate_min = 12;                   // Hide loan if less than this interest rate.
 /* End of user-editable variables */
 
+var target_lower = GM_getValue('investment_target');   // Buy (green) if we have less than this amount in it.
+var target_upper = target_lower * 1.1;                 // Sell (red) if we have more than this amount in it.
 var initial_wait_timer = 0.5;  // Wait this amount of seconds before decorating the loan table (Because the loan table is loaded after page load, via ajax).
 
 // Row IDs.
