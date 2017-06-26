@@ -110,34 +110,26 @@ function decorate_loan_page() {
     var existing_investment = 0;
     var existing_investment_div = _x('//*[@id="invest-now"]/div/div/form/dl/dd[1]/div');
     if (existing_investment_div.length > 0) {
-        console.log(existing_investment_div[0]);
         var investment_txt = existing_investment_div[0].innerText;
         if (investment_txt.startsWith("My existing investment: £")) {
             existing_investment = str_to_pounds(investment_txt.replace("My existing investment: ", ""));
         }
     }
 
-    // Calculate investment suggestions.
-    var suggestions = {
-        '50': 50-existing_investment,
-        '100': 100-existing_investment,
-        '150': 150-existing_investment,
-        '200': 200-existing_investment,
-    };
-    var suggestion_txt = '';
-    for (var key in suggestions) {
-        var val = suggestions[key];
-        if (val < 0) val=0;
-        suggestion_txt += '£' + key + '->£' + val + '. ';
-    }
+    // Populate investment suggestion.
+    var my_funds_div = _x('//*[@id="invest-now"]/div/div/form/dl/dd[2]/span[@class="invest_price"]')[0];
+    var my_funds = str_to_pounds(my_funds_div.innerText);
 
-    // Add box with suggestions.
-    var my_funds = $(_x('//*[@id="invest-now"]/div/div/form/dl/dd[2]'));
-    my_funds.append('&nbsp;&nbsp;|&nbsp;&nbsp;<span class="invest-price">Suggested: ' + suggestion_txt + '</span>');
+    // Calculate investment suggestion.
+    var suggested_investment = Math.max(0, target_lower - existing_investment);
+    suggested_investment = Math.min(Math.floor(my_funds), suggested_investment);
+
+    $(my_funds_div).append('&nbsp;&nbsp;|&nbsp;&nbsp;<span class="invest-price">Suggested investment: £' + suggested_investment + '</span>');
 
     // Focus the price box.
     $('#price').focus();
 }
+
 
 (function() {
     'use strict';
