@@ -11,6 +11,7 @@
 // @match        https://www.moneything.com/p2p/index.php/Loan/invest/*
 // @grant        GM_setValue
 // @grant        GM_getValue
+// @grant        GM_addStyle
 // @require      ../../includes/p2p-common.user.js
 // @require      https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js
 // ==/UserScript==
@@ -34,7 +35,32 @@ var drawdown_row = 9;
 var renew_row = 10;
 
 
-function main() {
+function decorate_available_page() {
+    // Expand the main table.
+    $(_x("/html/body/div[1]/div[2]/div")).removeClass("container").addClass("container-fluid");
+    // Reduce the padding on the table headings, to compress things more.
+    // .fixed-table-container thead th .sortable  -> padding-right: 15px;
+    // .fixed-table-container tbody td .th-inner, .fixed-table-container thead th .th-inner  -> padding: 2px;
+    GM_addStyle(`
+    .fixed-table-container tbody td .th-inner, .fixed-table-container thead th .th-inner {
+        /* Make that able heading padding smaller */
+        padding: 0px;
+    }
+    .fixed-table-container thead th .sortable {
+        /* Make the table heading right padding smaller */
+        padding-right: 10px;
+    }
+    .th-inner {
+        /* Make the table heading text smaller */
+        font-size: 10px;
+    }
+    .fixed-table-container thead th .sortable {
+        /* Shift the sortable icon to the right a bit. */
+        background-position: 115%;
+    }
+    `);
+
+
     // Hide out some loans that don't meet our requirements.
     var each_tr = "//*[@id='table1']/*/tr[*]";
     $(_x(each_tr)).each(function () {
@@ -91,12 +117,12 @@ function main() {
         // Hide all 'renew' and 'Draw Down' columns.
         this.children[biddingstart_row].style.display = 'none';
         this.children[drawdown_row].style.display = 'none';
-        this.children[renew_row].style.display = 'none';
 
     });
 
     setup_target_toggler_checkbox('//*[@id="content"]/div[2]', each_tr);
 }
+
 
 function decorate_loan_page() {
     var details_pane = _x('//*[@id="details"]')[0];
@@ -137,7 +163,7 @@ function decorate_loan_page() {
     if (window.location.href.search('[lL]oan\(\|.html\)$') > -1) {
         /* Loans available page */
         console.log('loans/available page');
-        var reloader_timeout = setTimeout(main, initial_wait_timer*1000);
+        var reloader_timeout = setTimeout(decorate_available_page, initial_wait_timer*1000);
 
     } else if (window.location.href.search('Center/invest/mid/live.html') > -1) {
         /* My Loans page */
