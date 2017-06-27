@@ -150,9 +150,11 @@ function decorate_loan_page() {
     var suggested_investment = Math.max(0, target_lower - existing_investment);
     suggested_investment = Math.min(Math.floor(my_funds), suggested_investment);
 
-    $(my_funds_div).append('&nbsp;&nbsp;|&nbsp;&nbsp;<span class="invest-price">Suggested investment: £' + suggested_investment + '</span>');
+    var invest_box = _x('//*[@id="price"]')[0];
+    invest_box.value = suggested_investment;
 
     // Focus the price box.
+    $("#price").focus(function() { $(this).select(); } );  // On focus, select all the text.
     $('#price').focus();
 }
 
