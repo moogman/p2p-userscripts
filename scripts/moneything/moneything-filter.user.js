@@ -21,13 +21,10 @@
 /* ### DO NOT EDIT ANYTHING HERE - IT WILL BE OVERWRITTEN ON UPDATE ###
 Please log a feature request through the forum.
 */
-/*GM_deleteValue('min_interest_rate');
-GM_deleteValue('investment_target');
-GM_deleteValue('show_at_target_by_default');*/
 
-var loan_rate_min = parseFloat(GM_getValue('min_interest_rate'));  // Hide loan if less than this interest rate.
-var target_lower = parseFloat(GM_getValue('investment_target'));   // Buy (green) if we have less than this amount in it.
-var target_upper = target_lower * 1.1;                             // Sell (red) if we have more than this amount in it.
+
+set_defaults(false);
+var target_upper_spread = 1.1;  //  Investment target + this value is the upper target, whereby any investments >= this level will be highlighted in red.
 var initial_wait_timer = 0.5;  // Wait this amount of seconds before decorating the loan table (Because the loan table is loaded after page load, via ajax).
 
 // Row IDs.
@@ -89,6 +86,8 @@ function decorate_available_page() {
         }
 
         // Hide any at target investment level.
+        var target_lower = parseFloat(GM_getValue('investment_target'));
+        var target_upper = target_lower * target_upper_spread;
         if (is_available_page && available < 1) {
             tr.dataset.target = 'hit';
             //tr.style.display = 'none';
@@ -109,7 +108,7 @@ function decorate_available_page() {
         }
 
         // Hide any loans with IR < 12%.
-        if (parseFloat(this.children[rate_row].textContent) < loan_rate_min) {
+        if (parseFloat(this.children[rate_row].textContent) < parseFloat(GM_getValue('min_interest_rate'))) {
             this.children[rate_row].style["background-color"] = '#ffdddd';
             tr.dataset.target = 'hit';
         }
@@ -120,9 +119,12 @@ function decorate_available_page() {
             tr.dataset.target = 'hit';
         }
 
-        // Hide all 'renew' and 'Draw Down' columns.
+        // Hide some columns: Bidding start, Draw Down, Renew.
         this.children[biddingstart_row].style.display = 'none';
         this.children[drawdown_row].style.display = 'none';
+        if (GM_getValue('show_renew_column') === false) {
+            this.children[renew_row].style.display = 'none';
+        }
 
     });
 
@@ -153,6 +155,7 @@ function decorate_loan_page() {
     var my_funds = str_to_pounds(my_funds_div.innerText);
 
     // Calculate investment suggestion.
+    var target_lower = parseFloat(GM_getValue('investment_target'));
     var suggested_investment = Math.max(0, target_lower - existing_investment);
     suggested_investment = Math.min(Math.floor(my_funds), suggested_investment);
 

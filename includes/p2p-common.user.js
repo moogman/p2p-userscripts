@@ -50,6 +50,8 @@ function setup_target_toggler_checkbox(toggler_location_xpath, target_xpath) {
         <tr><td>Investment target:</td><td>£<input id='investment_target' type='text' style='width: 60px;' /></td></tr>
         <tr><td>Min interest rate:</td><td><input id='min_interest_rate' type='text' style='width: 45px;' />%</td></tr>
         </table>
+        <h4>Display options:</h4>
+        <label><input id='show_renew_column' type='checkbox' />Show Renew column</label>
         </div>
     `);
     $("#options_dialog").dialog({
@@ -69,12 +71,14 @@ function setup_target_toggler_checkbox(toggler_location_xpath, target_xpath) {
     });
 
     // Setup default values.
-    $('#investment_target')[0].value = parseFloat(GM_getValue('investment_target', 200));
-    $('#min_interest_rate')[0].value = parseFloat(GM_getValue('min_interest_rate', 10.0));
+    $('#showcheckbox').prop('checked', GM_getValue('show_at_target_by_default'));
+    $('#investment_target')[0].value = parseFloat(GM_getValue('investment_target'));
+    $('#min_interest_rate')[0].value = parseFloat(GM_getValue('min_interest_rate'));
+    $('#show_renew_column').prop('checked', GM_getValue('show_renew_column'));
+
 
     // Setup JS for each new control.
     $('#showcheckbox').on("click", function() {
-        //show_at_target_by_default
         GM_setValue('show_at_target_by_default', this.checked);
         toggle_attarget(this.checked, target_xpath);
     });
@@ -84,14 +88,16 @@ function setup_target_toggler_checkbox(toggler_location_xpath, target_xpath) {
     $('#min_interest_rate').on("keyup", function() {
         GM_setValue('min_interest_rate', parseFloat(this.value));
     });
+    $('#show_renew_column').on("click", function() {
+        GM_setValue('show_renew_column', this.checked);
+    });
+
     $('#open_options').on("click", function() {
         $('#options_dialog').dialog('open');
     });
 
-    // Trigger table filtering.
-    var show_at_target_by_default = GM_getValue('show_at_target_by_default', false);     // Show 'loans already at target' on initial load.
-    toggle_attarget(show_at_target_by_default, target_xpath);
-    $('#showcheckbox').prop('checked', show_at_target_by_default);
+    /* Trigger a table refresh.  */
+    toggle_attarget(GM_getValue('show_at_target_by_default'), target_xpath);
 }
 
 
@@ -107,4 +113,30 @@ function toggle_attarget(show, target_xpath) {
             }
         }
     });
+}
+
+
+function set_defaults(re_initialise) {
+    var cookies = {
+        'investment_target': 200,
+        'min_interest_rate': 10,
+        'show_at_target_by_default': false,
+        'show_renew_column': false,
+    };
+
+    /* Delete saved cookies if initialise set. */
+    if (re_initialise) {
+        for (var key in cookies) {
+            GM_deleteValue(key);
+        }
+    }
+
+    /* Save default values if none exist. */
+    for (var key in cookies) {
+        var val = cookies[key];
+        if (GM_getValue(key) === undefined) {
+            GM_setValue(key, val);
+        }
+    }
+
 }
