@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         moneything-filter
 // @namespace    https://github.com/moogman/p2p-userscripts/scripts/moneything
-// @version      0.1.1
+// @version      0.1.2
 // @description  Filter out various things on the MoneyThing website.
 // @author       moogman
 // @match        https://www.moneything.com/p2p/index.php/loan
@@ -11,17 +11,23 @@
 // @match        https://www.moneything.com/p2p/index.php/Loan/invest/*
 // @grant        GM_setValue
 // @grant        GM_getValue
+// @grant        GM_deleteValue
 // @grant        GM_addStyle
 // @require      ../../includes/p2p-common.user.js
-// @require      https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js
+// XX@require      https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js        // Disable as MT already uses jQuery
+// XX@require      https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js  // Disable as MT already uses jQueryUI
 // ==/UserScript==
 
-/* Start of user-editable variables */
-var loan_rate_min = 12;                   // Hide loan if less than this interest rate.
-/* End of user-editable variables */
+/* ### DO NOT EDIT ANYTHING HERE - IT WILL BE OVERWRITTEN ON UPDATE ###
+Please log a feature request through the forum.
+*/
+/*GM_deleteValue('min_interest_rate');
+GM_deleteValue('investment_target');
+GM_deleteValue('show_at_target_by_default');*/
 
-var target_lower = GM_getValue('investment_target');   // Buy (green) if we have less than this amount in it.
-var target_upper = target_lower * 1.1;                 // Sell (red) if we have more than this amount in it.
+var loan_rate_min = parseFloat(GM_getValue('min_interest_rate'));  // Hide loan if less than this interest rate.
+var target_lower = parseFloat(GM_getValue('investment_target'));   // Buy (green) if we have less than this amount in it.
+var target_upper = target_lower * 1.1;                             // Sell (red) if we have more than this amount in it.
 var initial_wait_timer = 0.5;  // Wait this amount of seconds before decorating the loan table (Because the loan table is loaded after page load, via ajax).
 
 // Row IDs.
