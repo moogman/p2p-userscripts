@@ -114,7 +114,8 @@ function decorate_available_page() {
         }
 
         // Hide any "IMMINENT REPAYMENT" or "EXPECTED REPAYMENT".
-        if (this.children[description_row].textContent.includes("IMMINENT REPAYMENT") || this.children[description_row].textContent.includes("EXPECTED REPAYMENT")) {
+        var hide_re = RegExp(GM_getValue('loan_hide_regexp'));
+        if (this.children[description_row].textContent.match(hide_re)) {
             this.children[description_row].style["background-color"] = '#ffdddd';
             tr.dataset.target = 'hit';
         }

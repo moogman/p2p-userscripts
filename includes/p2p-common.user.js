@@ -49,6 +49,7 @@ function setup_target_toggler_checkbox(toggler_location_xpath, target_xpath) {
         <table>
         <tr><td>Investment target:</td><td>£<input id='investment_target' type='text' style='width: 60px;' /></td></tr>
         <tr><td>Min interest rate:</td><td><input id='min_interest_rate' type='text' style='width: 45px;' />%</td></tr>
+        <tr><td>Filter out regexp<br /> (Separate with "|"):</td><td><textarea id='loan_hide_regexp' style='height: 100px; width: 500px;' /></td></tr>
         </table>
         <h4>Display options:</h4>
         <label><input id='show_renew_column' type='checkbox' />Show Renew column</label>
@@ -60,7 +61,13 @@ function setup_target_toggler_checkbox(toggler_location_xpath, target_xpath) {
         closeText: '',
         width: 'auto',
         buttons: {
-            'Hide' : function() {
+            'Restore Defaults' : function() {
+                if (confirm('Are you sure you want to restore all settings to default?') === true) {
+                    set_defaults(true);
+                    $(this).dialog('close');
+                }
+            },
+            'Close' : function() {
                 $(this).dialog('close');
             }
         },
@@ -74,6 +81,7 @@ function setup_target_toggler_checkbox(toggler_location_xpath, target_xpath) {
     $('#showcheckbox').prop('checked', GM_getValue('show_at_target_by_default'));
     $('#investment_target')[0].value = parseFloat(GM_getValue('investment_target'));
     $('#min_interest_rate')[0].value = parseFloat(GM_getValue('min_interest_rate'));
+    $('#loan_hide_regexp')[0].value = GM_getValue('loan_hide_regexp');
     $('#show_renew_column').prop('checked', GM_getValue('show_renew_column'));
 
 
@@ -87,6 +95,10 @@ function setup_target_toggler_checkbox(toggler_location_xpath, target_xpath) {
     });
     $('#min_interest_rate').on("keyup", function() {
         GM_setValue('min_interest_rate', parseFloat(this.value));
+    });
+    $('#loan_hide_regexp').on("keyup", function() {
+        $(this).val($(this).val().replace(/[\r\n\v]+/g, ''));
+        GM_setValue('loan_hide_regexp', this.value);
     });
     $('#show_renew_column').on("click", function() {
         GM_setValue('show_renew_column', this.checked);
@@ -121,6 +133,7 @@ function set_defaults(re_initialise) {
         'investment_target': 200,
         'min_interest_rate': 10,
         'show_at_target_by_default': false,
+        'loan_hide_regexp': 'IMMINENT REPAYMENT|EXPECTED REPAYMENT',
         'show_renew_column': false,
     };
 
