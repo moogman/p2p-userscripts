@@ -118,8 +118,6 @@ function setup_target_toggler_checkbox(toggler_location_xpath, target_xpath) {
         $('#options_dialog').dialog('open');
     });
 
-    /* Trigger a table refresh.  */
-    toggle_attarget(GM_getValue('show_at_target_by_default'), target_xpath);
 }
 
 

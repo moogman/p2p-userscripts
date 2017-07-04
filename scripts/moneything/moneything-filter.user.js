@@ -40,6 +40,9 @@ var invested_row = 8;
 var drawdown_row = 9;
 var renew_row = 10;
 
+// Xpath locations.
+var each_tr = "//*[@id='table1']/*/tr[*]";  // Match on each <tr> of the available loan table.
+
 
 function decorate_available_page() {
     // Expand the main table.
@@ -66,9 +69,26 @@ function decorate_available_page() {
     }
     `);
 
+    // Install the button bar for toggling and options.
+    setup_target_toggler_checkbox('//*[@id="content"]/div[2]', each_tr);
 
+    // Listen to changes on the loan table (for example, at first load, and at table column refresh times).
+    var target = _x('//*[@id="table1"]/tbody')[0];
+
+    // create an observer instance
+    var observer_config = { childList: true, attributes: false, characterData: false, subtree: true};
+    var observer = new MutationObserver(function(mutations) {
+        decorate_available_table();
+        /* Trigger a table refresh.  */
+        toggle_attarget(GM_getValue('show_at_target_by_default'), each_tr);
+    });
+    observer.observe(target, observer_config);
+
+}
+
+
+function decorate_available_table() {
     // Hide out some loans that don't meet our requirements.
-    var each_tr = "//*[@id='table1']/*/tr[*]";
     $(_x(each_tr)).each(function () {
         var tr = this;
 
@@ -132,7 +152,6 @@ function decorate_available_page() {
 
     });
 
-    setup_target_toggler_checkbox('//*[@id="content"]/div[2]', each_tr);
 }
 
 
@@ -178,7 +197,7 @@ function decorate_loan_page() {
     if (window.location.href.search('[lL]oan\(\|.html\)$') > -1) {
         /* Loans available page */
         console.log('loans/available page');
-        var reloader_timeout = setTimeout(decorate_available_page, initial_wait_timer*1000);
+        decorate_available_page();
 
     } else if (window.location.href.search('Center/invest/mid/live.html') > -1) {
         /* My Loans page */
