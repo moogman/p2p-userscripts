@@ -29,6 +29,9 @@ var initial_wait_timer = 0.5;  // Wait this amount of seconds before decorating 
 
 // Row IDs.
 var description_row = 0;
+var loanvalue_row = 1;
+var assetvalue_row = 2;
+var ltv_row = 3;
 var rate_row = 4;
 var biddingstart_row = 5;
 var enddate_row = 6;
@@ -123,9 +126,9 @@ function decorate_available_page() {
         // Hide some columns: Bidding start, Draw Down, Renew.
         this.children[biddingstart_row].style.display = 'none';
         this.children[drawdown_row].style.display = 'none';
-        if (GM_getValue('show_renew_column') === false) {
-            this.children[renew_row].style.display = 'none';
-        }
+        if (GM_getValue('show_loanvalue_column') === false) this.children[loanvalue_row].style.display = 'none';
+        if (GM_getValue('show_assetvalue_column') === false) this.children[assetvalue_row].style.display = 'none';
+        if (GM_getValue('show_renew_column') === false) this.children[renew_row].style.display = 'none';
 
     });
 

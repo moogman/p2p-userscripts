@@ -52,7 +52,9 @@ function setup_target_toggler_checkbox(toggler_location_xpath, target_xpath) {
         <tr><td>Filter out regexp<br /> (Separate with "|"):</td><td><textarea id='loan_hide_regexp' style='height: 100px; width: 500px;' /></td></tr>
         </table>
         <h4>Display options:</h4>
-        <label><input id='show_renew_column' type='checkbox' />Show Renew column</label>
+        <label><input id='show_loanvalue_column' type='checkbox' />Show 'Loan value' column</label>
+        <label><input id='show_assetvalue_column' type='checkbox' />Show 'Asset value' column</label>
+        <label><input id='show_renew_column' type='checkbox' />Show 'Renew' column</label>
         </div>
     `);
     $("#options_dialog").dialog({
@@ -82,6 +84,8 @@ function setup_target_toggler_checkbox(toggler_location_xpath, target_xpath) {
     $('#investment_target')[0].value = parseFloat(GM_getValue('investment_target'));
     $('#min_interest_rate')[0].value = parseFloat(GM_getValue('min_interest_rate'));
     $('#loan_hide_regexp')[0].value = GM_getValue('loan_hide_regexp');
+    $('#show_loanvalue_column').prop('checked', GM_getValue('show_loanvalue_column'));
+    $('#show_assetvalue_column').prop('checked', GM_getValue('show_assetvalue_column'));
     $('#show_renew_column').prop('checked', GM_getValue('show_renew_column'));
 
 
@@ -99,6 +103,12 @@ function setup_target_toggler_checkbox(toggler_location_xpath, target_xpath) {
     $('#loan_hide_regexp').on("keyup", function() {
         $(this).val($(this).val().replace(/[\r\n\v]+/g, ''));
         GM_setValue('loan_hide_regexp', this.value);
+    });
+    $('#show_loanvalue_column').on("click", function() {
+        GM_setValue('show_loanvalue_column', this.checked);
+    });
+    $('#show_assetvalue_column').on("click", function() {
+        GM_setValue('show_assetvalue_column', this.checked);
     });
     $('#show_renew_column').on("click", function() {
         GM_setValue('show_renew_column', this.checked);
@@ -134,6 +144,8 @@ function set_defaults(re_initialise) {
         'min_interest_rate': 10,
         'show_at_target_by_default': false,
         'loan_hide_regexp': 'IMMINENT REPAYMENT|EXPECTED REPAYMENT',
+        'show_loanvalue_column': true,
+        'show_assetvalue_column': true,
         'show_renew_column': false,
     };
 
