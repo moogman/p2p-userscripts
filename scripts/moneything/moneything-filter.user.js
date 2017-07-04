@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         moneything-filter
 // @namespace    https://github.com/moogman/p2p-userscripts/scripts/moneything
-// @version      0.1.4
+// @version      0.1.5
 // @description  Filter out various things on the MoneyThing website.
 // @author       moogman
 // @match        https://www.moneything.com/p2p/index.php/loan
