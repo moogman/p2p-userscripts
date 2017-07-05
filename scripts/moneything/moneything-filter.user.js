@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         moneything-filter
 // @namespace    https://github.com/moogman/p2p-userscripts/scripts/moneything
-// @version      0.1.5
+// @version      0.1.6
 // @description  Filter out various things on the MoneyThing website.
 // @author       moogman
 // @match        https://www.moneything.com/p2p/index.php/loan
@@ -14,8 +14,8 @@
 // @grant        GM_deleteValue
 // @grant        GM_addStyle
 // @require      ../../includes/p2p-common.user.js
-// XX@require      https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js        // Disable as MT already uses jQuery
-// XX@require      https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js  // Disable as MT already uses jQueryUI
+// @require      https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js
+// @require      https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js
 // ==/UserScript==
 
 /* ### DO NOT EDIT ANYTHING HERE - IT WILL BE OVERWRITTEN ON UPDATE ###
@@ -73,7 +73,7 @@ function decorate_available_page() {
     setup_target_toggler_checkbox('//*[@id="content"]/div[2]', each_tr);
 
     // Listen to changes on the loan table (for example, at first load, and at table column refresh times).
-    var target = _x('//*[@id="table1"]/tbody')[0];
+    var target = _x('//*[@id="table1"]')[0];
 
     // create an observer instance
     var observer_config = { childList: true, attributes: false, characterData: false, subtree: true};
@@ -91,6 +91,11 @@ function decorate_available_table() {
     // Hide out some loans that don't meet our requirements.
     $(_x(each_tr)).each(function () {
         var tr = this;
+
+        if (tr.children.length < 8) {
+            // If we don't have enough cells, the table isn't loaded yet - Exit.
+            return false;
+        }
 
         for (var child of tr.children) {
             child.style.padding = '2px';
