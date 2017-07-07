@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         moneything-filter
 // @namespace    https://github.com/moogman/p2p-userscripts/scripts/moneything
-// @version      0.1.6
+// @version      0.1.7
 // @description  Filter out various things on the MoneyThing website.
 // @author       moogman
 // @match        https://www.moneything.com/p2p/index.php/loan
@@ -9,6 +9,7 @@
 // @match        https://www.moneything.com/p2p/index.php/Loan.html
 // @match        https://www.moneything.com/p2p/index.php/Center/invest/mid/live.html
 // @match        https://www.moneything.com/p2p/index.php/Loan/invest/*
+// @match        https://www.moneything.com/p2p/index.php/Center.html
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_deleteValue
@@ -196,6 +197,19 @@ function decorate_loan_page() {
 }
 
 
+function decorate_funds_overview_page() {
+    // Add "Total on platform" section.
+    var balance_elem = $(_x('//*[@id="content"]/div/div/p')[0]);
+
+    var live_elem = $(_x('/html/body/div[1]/div[2]/div[2]/div[1]/div/div[2]/table/tbody/tr[1]/td[3]'))[0];
+    var account_balance_elem = $(_x('//*[@id="content"]/div/div/p/span[1]'))[0];
+
+    var total = str_to_pounds(live_elem.innerText) + str_to_pounds(account_balance_elem.innerText);
+    balance_elem.append(' &nbsp; &nbsp;Total funds: <span class="blue">£' + total + '</span>');
+    console.log(balance_elem.innerHTML);
+}
+
+
 (function() {
     'use strict';
 
@@ -212,6 +226,11 @@ function decorate_loan_page() {
         /* A loan page */
         console.log('a loan page');
         decorate_loan_page();
+
+    } else if (window.location.href.match('/Center.html') !== null) {
+        /* Funds overview page */
+        console.log('funds overview page');
+        decorate_funds_overview_page();
     }
 
 })();
