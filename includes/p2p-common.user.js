@@ -163,3 +163,60 @@ function set_defaults(re_initialise) {
     }
 
 }
+
+
+var filter = {
+    by_invested: function(tr, amnt_available, target_upper_spread) {
+        // Hide any at target investment level.
+        var invested_td = tr.children[invested_row];
+        var invested = str_to_pounds(invested_td.textContent) || 0;
+        var target_lower = parseFloat(GM_getValue('investment_target'));
+        var target_upper = target_lower * target_upper_spread;
+        if (amnt_available < 1) {
+            // none available -> mark as hit (hide).
+            tr.dataset.target = 'hit';
+        } else if (invested > target_upper) {
+            // heavy -> make red
+            invested_td.style["background-color"] = '#ffdddd';
+            tr.dataset.target = 'above';
+        } else if (invested > target_lower) {
+            // light -> make orange
+            invested_td.style["background-color"] = '#fff6db';
+            tr.dataset.target = 'hit';
+        } else if (invested < target_lower) {
+            // light -> make green
+            invested_td.style["background-color"] = '#ddffdd';
+            tr.dataset.target = 'below';
+        } else {
+            tr.dataset.target = 'hit';
+        }
+    },
+    by_interest_rate: function(tr) {
+        // Hide any loans with IR < 12%.
+        var interest_rate = parseFloat(tr.children[rate_row].textContent);
+        if (interest_rate < parseFloat(GM_getValue('min_interest_rate'))) {
+            tr.children[rate_row].style["background-color"] = '#ffdddd';
+            tr.dataset.target = 'hit';
+        }
+    },
+    by_regexp: function(tr) {
+        // Hide any filtered rows (e.g. "IMMINENT REPAYMENT" or "EXPECTED REPAYMENT").
+        var hide_re = RegExp(GM_getValue('loan_hide_regexp'));
+        if (tr.children[description_row].textContent.match(hide_re)) {
+            tr.children[description_row].style["background-color"] = '#ffdddd';
+            tr.dataset.target = 'hit';
+        }
+    }
+};
+
+/*
+var Filter = function() {
+}
+Filter.prototype = {
+    constructor: Filter,
+
+    by_interest_rate: function(tr) {
+    }
+}
+var filter = new Filter();
+*/

@@ -4,6 +4,7 @@
 // @version      0.1.7
 // @description  Filter out various things on the MoneyThing website.
 // @author       moogman
+// @homepage     http://p2pindependentforum.com/thread/9306/moneything-browser-extension
 // @match        https://www.moneything.com/p2p/index.php/loan
 // @match        https://www.moneything.com/p2p/index.php/Loan
 // @match        https://www.moneything.com/p2p/index.php/Loan.html
@@ -26,23 +27,24 @@ Please log a feature request through the forum.
 
 set_defaults(false);
 var target_upper_spread = 1.1;  //  Investment target + this value is the upper target, whereby any investments >= this level will be highlighted in red.
-var initial_wait_timer = 0.5;  // Wait this amount of seconds before decorating the loan table (Because the loan table is loaded after page load, via ajax).
 
-// Row IDs.
-var description_row = 0;
-var loanvalue_row = 1;
-var assetvalue_row = 2;
-var ltv_row = 3;
-var rate_row = 4;
-var biddingstart_row = 5;
-var enddate_row = 6;
-var available_row = 7;
-var invested_row = 8;
-var drawdown_row = 9;
-var renew_row = 10;
+// Row IDs (ids 0-x).
+var [description_row,
+     loanvalue_row,
+     assetvalue_row,
+     ltv_row,
+     rate_row,
+     biddingstart_row,
+     enddate_row,
+     available_row,
+     invested_row,
+     drawdown_row,
+     renew_row
+     ] = Array.from(new Array(20), (x,i) => i);
 
 // Xpath locations.
 var each_tr = "//*[@id='table1']/*/tr[*]";  // Match on each <tr> of the available loan table.
+var options_location = '//*[@id="content"]/div[2]';
 
 
 function decorate_available_page() {
@@ -71,7 +73,7 @@ function decorate_available_page() {
     `);
 
     // Install the button bar for toggling and options.
-    setup_target_toggler_checkbox('//*[@id="content"]/div[2]', each_tr);
+    setup_target_toggler_checkbox(options_location, each_tr);
 
     // Listen to changes on the loan table (for example, at first load, and at table column refresh times).
     var target = _x('//*[@id="table1"]')[0];
@@ -102,52 +104,18 @@ function decorate_available_table() {
             child.style.padding = '2px';
         }
 
-        var is_available_page = true;
-        var invested_td = this.children[invested_row];
-        var invested = str_to_pounds(invested_td.textContent) || 0;
-        var available = -1;
-        if (is_available_page) {
-            var available_td = tr.children[available_row];
-            //available = str_to_pounds(available_td.textContent);
-             if (available_td.textContent != '0.00%') {
-                 available = 1;
-             }
+        var amnt_available = 1;
+        if (tr.children[available_row].textContent == '0.00%') {
+            amnt_available = -1;
         }
 
-        // Hide any at target investment level.
-        var target_lower = parseFloat(GM_getValue('investment_target'));
-        var target_upper = target_lower * target_upper_spread;
-        if (is_available_page && available < 1) {
-            tr.dataset.target = 'hit';
-            //tr.style.display = 'none';
-        } else if (invested > target_upper) {
-            // heavy -> make red
-            invested_td.style["background-color"] = '#ffdddd';
-            tr.dataset.target = 'above';
-        } else if (invested > target_lower) {
-            // light -> make orange
-            invested_td.style["background-color"] = '#fff6db';
-            tr.dataset.target = 'hit';
-        } else if (invested < target_lower) {
-            // light -> make green
-            invested_td.style["background-color"] = '#ddffdd';
-            tr.dataset.target = 'below';
-        } else {
-            tr.dataset.target = 'hit';
-        }
+        filter.by_invested(tr, amnt_available, target_upper_spread);  // Hide any at target investment level.
+        filter.by_interest_rate(tr);                                  // Hide any loans with IR < 12%.
+        filter.by_regexp(tr);                                         // Hide any filtered rows (e.g. "IMMINENT REPAYMENT" or "EXPECTED REPAYMENT").
 
-        // Hide any loans with IR < 12%.
-        if (parseFloat(this.children[rate_row].textContent) < parseFloat(GM_getValue('min_interest_rate'))) {
-            this.children[rate_row].style["background-color"] = '#ffdddd';
-            tr.dataset.target = 'hit';
-        }
-
-        // Hide any "IMMINENT REPAYMENT" or "EXPECTED REPAYMENT".
-        var hide_re = RegExp(GM_getValue('loan_hide_regexp'));
-        if (this.children[description_row].textContent.match(hide_re)) {
-            this.children[description_row].style["background-color"] = '#ffdddd';
-            tr.dataset.target = 'hit';
-        }
+        //
+        // Platform-specific filters/hides.
+        //
 
         // Hide some columns: Bidding start, Draw Down, Renew.
         this.children[biddingstart_row].style.display = 'none';
@@ -213,24 +181,18 @@ function decorate_funds_overview_page() {
 (function() {
     'use strict';
 
-    if (window.location.href.search('[lL]oan\(\|.html\)$') > -1) {
-        /* Loans available page */
-        console.log('loans/available page');
+    if (window.location.href.search('[lL]oan\(\|.html\)$') > -1) {  // Loans available page
         decorate_available_page();
 
-    } else if (window.location.href.search('Center/invest/mid/live.html') > -1) {
-        /* My Loans page */
-        console.log('my loans page');
+    } else if (window.location.href.search('Center/invest/mid/live.html') > -1) { // My Loans page
+        //decorate_my_loans_page();
 
-    } else if (window.location.href.match('Loan/invest/[0-9]+.html') !== null) {
-        /* A loan page */
-        console.log('a loan page');
+    } else if (window.location.href.match('Loan/invest/[0-9]+.html') !== null) {  // A loan page
         decorate_loan_page();
 
-    } else if (window.location.href.match('/Center.html') !== null) {
-        /* Funds overview page */
-        console.log('funds overview page');
+    } else if (window.location.href.match('/Center.html') !== null) {  // Funds overview page
         decorate_funds_overview_page();
+
     }
 
 })();
