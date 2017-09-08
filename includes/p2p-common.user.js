@@ -1,6 +1,16 @@
 function str_to_pounds(string) {
     // Filter out [£,] in e.g. "£1,234"
-    return parseFloat(string.replace(/[£,]/g , ""));
+    return parseFloat(String(string).replace(/[a-zA-Z: £,]/g , ""));
+}
+
+
+function dd_mm_yyyy_to_date(string) {
+    var split_txt = string.split('/');
+    var date = new Date(split_txt[2], split_txt[1]-1, split_txt[0]);
+    var today = new Date();
+
+    var days_between = Math.round((date-today)/(1000*60*60*24));
+    return days_between
 }
 
 
@@ -25,8 +35,8 @@ function setup_target_toggler_checkbox(toggler_location_xpath, target_xpath) {
     toggler_location.children()[0].style.display = 'inline-block';
 
     // Add jQueryUI style sheet.
-    // Disable as MT already uses jQueryUI.
-    //$("head").append ('<link https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/ui-lightness/jquery-ui.min.css" rel="stylesheet" type="text/css">');
+    var jquery_css = GM_getResourceText('jquery_css');
+    GM_addStyle(jquery_css);
 
     // Add HTML blob with checkbox/buttons in it.
     var box = document.createElement('ul');
@@ -35,7 +45,7 @@ function setup_target_toggler_checkbox(toggler_location_xpath, target_xpath) {
     box.innerHTML = `
         <li class='c-navigation__item'>
         <label class='c-navigation__item__inner  c-navigation__item__action' style='display: inline-block;'>
-            &nbsp;<input id='showcheckbox' type='checkbox' />&nbsp;Show at-target
+            &nbsp;<input id='showcheckbox' type='checkbox' />&nbsp;Show filtered
         </label>
         <button id='open_options' type='button' class='btn btn-primary'>Options</button>
         </li>
@@ -49,12 +59,16 @@ function setup_target_toggler_checkbox(toggler_location_xpath, target_xpath) {
         <table>
         <tr><td>Investment target:</td><td>£<input id='investment_target' type='text' style='width: 60px;' /></td></tr>
         <tr><td>Min interest rate:</td><td><input id='min_interest_rate' type='text' style='width: 45px;' />%</td></tr>
+        <tr><td>If end date is within </td><td><input id='remaining_threshold_yellow' type='text' style='width: 60px;' /> days, hide and colour yellow</td></tr>
+        <tr><td>If end date is within </td><td><input id='remaining_threshold_red' type='text' style='width: 60px;' /> days, hide and colour red</td></tr>
+        <tr><td>If end date is within </td><td><input id='remaining_threshold_black' type='text' style='width: 60px;' /> days, hide and colour black</td></tr>
         <tr><td>Filter out regexp<br /> (Separate with "|"):</td><td><textarea id='loan_hide_regexp' style='height: 100px; width: 500px;' /></td></tr>
         </table>
         <h4>Display options:</h4>
-        <label><input id='show_loanvalue_column' type='checkbox' />Show 'Loan value' column</label>
-        <label><input id='show_assetvalue_column' type='checkbox' />Show 'Asset value' column</label>
-        <label><input id='show_renew_column' type='checkbox' />Show 'Renew' column</label>
+        Show columns:
+        <label style="display: inline;"><input id='show_loanvalue_column' type='checkbox' />Loan value&nbsp&nbsp</label>
+        <label style="display: inline;"><input id='show_assetvalue_column' type='checkbox' />Asset value&nbsp&nbsp</label>
+        <label style="display: inline;"><input id='show_renew_column' type='checkbox' />Renew</label>
         </div>
     `);
     $("#options_dialog").dialog({
@@ -83,6 +97,9 @@ function setup_target_toggler_checkbox(toggler_location_xpath, target_xpath) {
     $('#showcheckbox').prop('checked', GM_getValue('show_at_target_by_default'));
     $('#investment_target')[0].value = parseFloat(GM_getValue('investment_target'));
     $('#min_interest_rate')[0].value = parseFloat(GM_getValue('min_interest_rate'));
+    $('#remaining_threshold_yellow')[0].value = parseFloat(GM_getValue('remaining_threshold_yellow'));
+    $('#remaining_threshold_red')[0].value = parseFloat(GM_getValue('remaining_threshold_red'));
+    $('#remaining_threshold_black')[0].value = parseFloat(GM_getValue('remaining_threshold_black'));
     $('#loan_hide_regexp')[0].value = GM_getValue('loan_hide_regexp');
     $('#show_loanvalue_column').prop('checked', GM_getValue('show_loanvalue_column'));
     $('#show_assetvalue_column').prop('checked', GM_getValue('show_assetvalue_column'));
@@ -96,6 +113,15 @@ function setup_target_toggler_checkbox(toggler_location_xpath, target_xpath) {
     });
     $('#investment_target').on("keyup", function() {
         GM_setValue('investment_target', parseInt(this.value));
+    });
+    $('#remaining_threshold_yellow').on("keyup", function() {
+        GM_setValue('remaining_threshold_yellow', parseInt(this.value));
+    });
+    $('#remaining_threshold_red').on("keyup", function() {
+        GM_setValue('remaining_threshold_red', parseInt(this.value));
+    });
+    $('#remaining_threshold_black').on("keyup", function() {
+        GM_setValue('remaining_threshold_black', parseInt(this.value));
     });
     $('#min_interest_rate').on("keyup", function() {
         GM_setValue('min_interest_rate', parseFloat(this.value));
@@ -145,6 +171,10 @@ function set_defaults(re_initialise) {
         'show_loanvalue_column': true,
         'show_assetvalue_column': true,
         'show_renew_column': false,
+
+        'remaining_threshold_yellow': 5,
+        'remaining_threshold_red': 3,
+        'remaining_threshold_black': 0,
     };
 
     /* Delete saved cookies if initialise set. */
@@ -206,6 +236,27 @@ var filter = {
             tr.children[description_row].style["background-color"] = '#ffdddd';
             tr.dataset.target = 'hit';
         }
+    },
+    by_remaining: function(tr, by_days) {
+        var remaining_td = tr.children[remaining_row];
+        var remaining_dys;
+        if (by_days) {
+            remaining_dys = parseInt(remaining_td.textContent);
+        } else {
+            remaining_dys = dd_mm_yyyy_to_date(remaining_td.innerText);
+            //console.log(remaining_dys);
+        }
+
+        if (remaining_dys < GM_getValue('remaining_threshold_black')) {  // Black (for example -90 = lendy default point)
+            remaining_td.style["background-color"] = '#000000';
+            tr.dataset.target = 'hit';
+        } else if (remaining_dys < GM_getValue('remaining_threshold_red')) {  // Mark as hit (Some use the "get out early" strategy)
+            remaining_td.style["background-color"] = '#ffdddd';
+            tr.dataset.target = 'hit';
+        } else if (remaining_dys < GM_getValue('remaining_threshold_yellow')) {  // Mark as hit if remaining is e.g. <200 (don't want to invest in these).
+            remaining_td.style["background-color"] = '#fff6db';
+            tr.dataset.target = 'hit';
+        }
     }
 };
 
@@ -220,3 +271,34 @@ Filter.prototype = {
 }
 var filter = new Filter();
 */
+
+
+function suggest_investment(existing_investment_xpath, my_funds_xpath, available_xpath) {
+    var existing_investment_div = _x(existing_investment_xpath);
+    var my_funds_div = _x(my_funds_xpath)[0];
+    var available_div = _x(available_xpath)[0];
+
+    // Calculate existing investment.
+    var existing_investment = 0;
+    console.log(existing_investment_div);
+    if (existing_investment_div.length == 1) {
+        existing_investment = str_to_pounds(existing_investment_div[0].innerText);
+    }
+    console.log('Existing investment: ' + existing_investment);
+
+    // Calculate my funds.
+    var my_funds = str_to_pounds(my_funds_div.innerText);
+    console.log('My funds: ' + my_funds);
+
+    // Calculate available for investment.
+    console.log(available_div.innerText);
+    var available = str_to_pounds(available_div.innerText);
+    console.log('Available: ' + available);
+
+    // Calculate investment suggestion.
+    var target_lower = parseFloat(GM_getValue('investment_target'));
+    var suggested_investment = Math.max(0, target_lower - existing_investment);
+    suggested_investment = Math.min(Math.floor(my_funds), suggested_investment, available);
+    console.log('Suggested investment: ' + suggested_investment);
+    return suggested_investment;
+}

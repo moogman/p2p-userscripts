@@ -15,9 +15,12 @@
 // @grant        GM_getValue
 // @grant        GM_deleteValue
 // @grant        GM_addStyle
+// @grant        GM_getResourceText
+// @run-at       document-start
 // @require      ../../includes/p2p-common.user.js
 // @require      https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js
 // @require      https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js
+// @resource     jquery_css https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/ui-lightness/jquery-ui.min.css
 // ==/UserScript==
 
 /* ### DO NOT EDIT ANYTHING HERE - IT WILL BE OVERWRITTEN ON UPDATE ###
@@ -28,6 +31,10 @@ Please log a feature request through the forum.
 set_defaults(false);
 var target_upper_spread = 1.1;  //  Investment target + this value is the upper target, whereby any investments >= this level will be highlighted in red.
 
+/* Start of user-editable variables */
+/* End of user-editable variables */
+
+
 // Row IDs (ids 0-x).
 var [description_row,
      loanvalue_row,
@@ -35,7 +42,7 @@ var [description_row,
      ltv_row,
      rate_row,
      biddingstart_row,
-     enddate_row,
+     remaining_row, //enddate_row,
      available_row,
      invested_row,
      drawdown_row,
@@ -48,6 +55,7 @@ var options_location = '//*[@id="content"]/div[2]';
 
 
 function decorate_available_page() {
+
     // Expand the main table.
     $(_x("/html/body/div[1]/div[2]/div")).removeClass("container").addClass("container-fluid");
     // Reduce the padding on the table headings, to compress things more.
@@ -112,17 +120,20 @@ function decorate_available_table() {
         filter.by_invested(tr, amnt_available, target_upper_spread);  // Hide any at target investment level.
         filter.by_interest_rate(tr);                                  // Hide any loans with IR < 12%.
         filter.by_regexp(tr);                                         // Hide any filtered rows (e.g. "IMMINENT REPAYMENT" or "EXPECTED REPAYMENT").
+        filter.by_remaining(tr, false);                               // Hide any with few days remaining.
+
 
         //
         // Platform-specific filters/hides.
         //
 
         // Hide some columns: Bidding start, Draw Down, Renew.
-        this.children[biddingstart_row].style.display = 'none';
-        this.children[drawdown_row].style.display = 'none';
-        if (GM_getValue('show_loanvalue_column') === false) this.children[loanvalue_row].style.display = 'none';
-        if (GM_getValue('show_assetvalue_column') === false) this.children[assetvalue_row].style.display = 'none';
-        if (GM_getValue('show_renew_column') === false) this.children[renew_row].style.display = 'none';
+        tr.children[biddingstart_row].style.display = 'none';
+        tr.children[drawdown_row].style.display = 'none';
+        if (GM_getValue('show_loanvalue_column') === false) tr.children[loanvalue_row].style.display = 'none';
+        if (GM_getValue('show_assetvalue_column') === false) tr.children[assetvalue_row].style.display = 'none';
+        if (GM_getValue('show_renew_column') === false) tr.children[renew_row].style.display = 'none';
+
 
     });
 
@@ -130,34 +141,17 @@ function decorate_available_table() {
 
 
 function decorate_loan_page() {
+    // Make the invest pane also active, and shuffle the panes so that it's at the top of the page.
     var details_pane = _x('//*[@id="details"]')[0];
     var invest_pane = _x('//*[@id="invest-now"]')[0];
-
-    // Make the invest pane also active, and shuffle the panes so that it's at the top of the page.
     $(invest_pane).addClass('active');
     invest_pane.parentElement.insertBefore(invest_pane, details_pane);
 
-    // Calculate existing investment.
-    var existing_investment = 0;
-    var existing_investment_div = _x('//*[@id="invest-now"]/div/div/form/dl/dd[1]/div');
-    if (existing_investment_div.length > 0) {
-        var investment_txt = existing_investment_div[0].innerText;
-        if (investment_txt.startsWith("My existing investment: £")) {
-            existing_investment = str_to_pounds(investment_txt.replace("My existing investment: ", ""));
-        }
-    }
-
-    // Populate investment suggestion.
-    var my_funds_div = _x('//*[@id="invest-now"]/div/div/form/dl/dd[2]/span[@class="invest_price"]')[0];
-    var my_funds = str_to_pounds(my_funds_div.innerText);
-
     // Calculate investment suggestion.
-    var target_lower = parseFloat(GM_getValue('investment_target'));
-    var suggested_investment = Math.max(0, target_lower - existing_investment);
-    suggested_investment = Math.min(Math.floor(my_funds), suggested_investment);
-
-    var invest_box = _x('//*[@id="price"]')[0];
-    invest_box.value = suggested_investment;
+    var existing_investment_xpath = '//*[@id="invest-now"]/div/div/form/dl/dd[1]/div';
+    var my_funds_xpath = '//*[@id="invest-now"]/div/div/form/dl/dd[2]/span[@class="invest_price"]';
+    var available_xpath = '//*[@id="invest-now"]/div/div/form/dl/dd[1]/span[2]';
+    $("#price")[0].value = suggest_investment(existing_investment_xpath, my_funds_xpath, available_xpath);
 
     // Focus the price box.
     $("#price").focus(function() { $(this).select(); } );  // On focus, select all the text.
