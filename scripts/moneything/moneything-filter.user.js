@@ -11,6 +11,7 @@
 // @match        https://www.moneything.com/p2p/index.php/Center/invest/mid/live.html
 // @match        https://www.moneything.com/p2p/index.php/Loan/invest/*
 // @match        https://www.moneything.com/p2p/index.php/Center.html
+// @match        https://www.moneything.com/p2p/index.php/Auth/login.html
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_deleteValue
@@ -186,6 +187,10 @@ function decorate_funds_overview_page() {
 
     } else if (window.location.href.match('/Center.html') !== null) {  // Funds overview page
         decorate_funds_overview_page();
+
+    } else if (window.location.href.match('/Auth/login.html') !== null) {  // Funds overview page
+        // Focus the email box, so that you can press enter to login.
+        $(_x('/html/body/div[1]/div[2]/div/div/form/div/div[1]/div/input')).focus();
 
     }
 
