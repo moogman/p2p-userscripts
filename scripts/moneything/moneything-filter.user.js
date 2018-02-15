@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         moneything-filter
 // @namespace    https://github.com/moogman/p2p-userscripts/scripts/moneything
-// @version      0.1.7
+// @version      0.1.8
 // @description  Filter out various things on the MoneyThing website.
 // @author       moogman
 // @homepage     http://p2pindependentforum.com/thread/9306/moneything-browser-extension
@@ -52,7 +52,8 @@ var [description_row,
 
 // Xpath locations.
 var each_tr = "//*[@id='table1']/*/tr[*]";  // Match on each <tr> of the available loan table.
-var options_location = '//*[@id="content"]/div[2]';
+var options_location = '/html/body/div[1]/div[1]/div';
+
 var my_funds_xpath = '//*[@id="invest-now"]/div/div/form/dl/dd[2]/span[@class="invest_price"]';  //FIX
 my_funds_xpath = '/html/body/header/div/div/div[2]/div/a[1]/span';
 
@@ -64,6 +65,10 @@ function decorate_available_page() {
     // .fixed-table-container thead th .sortable  -> padding-right: 15px;
     // .fixed-table-container tbody td .th-inner, .fixed-table-container thead th .th-inner  -> padding: 2px;
     GM_addStyle(`
+    .moog-options-div {
+        margin-top: 0px;
+        float: right;
+    }
     .fixed-table-container tbody td .th-inner, .fixed-table-container thead th .th-inner {
         /* Make that able heading padding smaller */
         padding: 0px;
