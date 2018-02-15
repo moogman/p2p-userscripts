@@ -17,7 +17,7 @@
 // @grant        GM_deleteValue
 // @grant        GM_addStyle
 // @grant        GM_getResourceText
-// @run-at       document-start
+// XXX@run-at       document-start
 // @require      ../../includes/p2p-common.user.js
 // @require      https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js
 // @require      https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js
@@ -53,7 +53,8 @@ var [description_row,
 // Xpath locations.
 var each_tr = "//*[@id='table1']/*/tr[*]";  // Match on each <tr> of the available loan table.
 var options_location = '//*[@id="content"]/div[2]';
-
+var my_funds_xpath = '//*[@id="invest-now"]/div/div/form/dl/dd[2]/span[@class="invest_price"]';  //FIX
+my_funds_xpath = '/html/body/header/div/div/div[2]/div/a[1]/span';
 
 function decorate_available_page() {
 
@@ -118,10 +119,10 @@ function decorate_available_table() {
             amnt_available = -1;
         }
 
-        filter.by_invested(tr, amnt_available, target_upper_spread);  // Hide any at target investment level.
         filter.by_interest_rate(tr);                                  // Hide any loans with IR < 12%.
         filter.by_regexp(tr);                                         // Hide any filtered rows (e.g. "IMMINENT REPAYMENT" or "EXPECTED REPAYMENT").
         filter.by_remaining(tr, false);                               // Hide any with few days remaining.
+        filter.by_invested(tr, amnt_available, target_upper_spread);  // Hide any at target investment level (Must be last, due to colouring based on previous filters).
 
 
         //
@@ -140,6 +141,9 @@ function decorate_available_table() {
 
 }
 
+function decorate_my_loans_page() {
+}
+
 
 function decorate_loan_page() {
     // Make the invest pane also active, and shuffle the panes so that it's at the top of the page.
@@ -150,7 +154,6 @@ function decorate_loan_page() {
 
     // Calculate investment suggestion.
     var existing_investment_xpath = '//*[@id="invest-now"]/div/div/form/dl/dd[1]/div';
-    var my_funds_xpath = '//*[@id="invest-now"]/div/div/form/dl/dd[2]/span[@class="invest_price"]';
     var available_xpath = '//*[@id="invest-now"]/div/div/form/dl/dd[1]/span[2]';
     $("#price")[0].value = suggest_investment(existing_investment_xpath, my_funds_xpath, available_xpath);
 
@@ -180,7 +183,7 @@ function decorate_funds_overview_page() {
         decorate_available_page();
 
     } else if (window.location.href.search('Center/invest/mid/live.html') > -1) { // My Loans page
-        //decorate_my_loans_page();
+        decorate_my_loans_page();
 
     } else if (window.location.href.match('Loan/invest/[0-9]+.html') !== null) {  // A loan page
         decorate_loan_page();
