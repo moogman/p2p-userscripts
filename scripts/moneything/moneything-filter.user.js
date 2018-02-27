@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         moneything-filter
 // @namespace    https://github.com/moogman/p2p-userscripts/scripts/moneything
-// @version      0.1.8
+// @version      0.1.9
 // @description  Filter out various things on the MoneyThing website.
 // @author       moogman
 // @homepage     http://p2pindependentforum.com/thread/9306/moneything-browser-extension
@@ -46,8 +46,7 @@ var [description_row,
      remaining_row, //enddate_row,
      available_row,
      invested_row,
-     drawdown_row,
-     renew_row
+     drawdown_row
      ] = Array.from(new Array(20), (x,i) => i);
 
 // Xpath locations.
@@ -139,7 +138,6 @@ function decorate_available_table() {
         tr.children[drawdown_row].style.display = 'none';
         if (GM_getValue('show_loanvalue_column') === false) tr.children[loanvalue_row].style.display = 'none';
         if (GM_getValue('show_assetvalue_column') === false) tr.children[assetvalue_row].style.display = 'none';
-        if (GM_getValue('show_renew_column') === false) tr.children[renew_row].style.display = 'none';
 
 
     });

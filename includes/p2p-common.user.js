@@ -32,6 +32,8 @@ function _x(STR_XPATH, parent=document) {
 function setup_target_toggler_checkbox(toggler_location_xpath, target_xpath) {
     // Add a JS checkbox to show/hide loans that can't be invested.
     var toggler_location = $(_x(toggler_location_xpath));
+    console.log(toggler_location_xpath);
+    console.log(toggler_location);
     toggler_location.children()[0].style.display = 'inline-block';
 
     // Add jQueryUI style sheet.
@@ -40,7 +42,7 @@ function setup_target_toggler_checkbox(toggler_location_xpath, target_xpath) {
 
     // Add HTML blob with checkbox/buttons in it.
     var box = document.createElement('ul');
-    box.className = 'c-navigation__group c-navigation__group--pinned';
+    box.className = 'c-navigation__group c-navigation__group--pinned moog-options-div';
     box.style.display = 'inline-block';
     box.innerHTML = `
         <li class='c-navigation__item'>
@@ -68,7 +70,6 @@ function setup_target_toggler_checkbox(toggler_location_xpath, target_xpath) {
         Show columns:
         <label style="display: inline;"><input id='show_loanvalue_column' type='checkbox' />Loan value&nbsp&nbsp</label>
         <label style="display: inline;"><input id='show_assetvalue_column' type='checkbox' />Asset value&nbsp&nbsp</label>
-        <label style="display: inline;"><input id='show_renew_column' type='checkbox' />Renew</label>
         </div>
     `);
     $("#options_dialog").dialog({
@@ -103,7 +104,6 @@ function setup_target_toggler_checkbox(toggler_location_xpath, target_xpath) {
     $('#loan_hide_regexp')[0].value = GM_getValue('loan_hide_regexp');
     $('#show_loanvalue_column').prop('checked', GM_getValue('show_loanvalue_column'));
     $('#show_assetvalue_column').prop('checked', GM_getValue('show_assetvalue_column'));
-    $('#show_renew_column').prop('checked', GM_getValue('show_renew_column'));
 
 
     // Setup JS for each new control.
@@ -136,9 +136,6 @@ function setup_target_toggler_checkbox(toggler_location_xpath, target_xpath) {
     $('#show_assetvalue_column').on("click", function() {
         GM_setValue('show_assetvalue_column', this.checked);
     });
-    $('#show_renew_column').on("click", function() {
-        GM_setValue('show_renew_column', this.checked);
-    });
 
     $('#open_options').on("click", function() {
         $('#options_dialog').dialog('open');
@@ -170,7 +167,6 @@ function set_defaults(re_initialise) {
         'loan_hide_regexp': 'IMMINENT REPAYMENT|EXPECTED REPAYMENT',
         'show_loanvalue_column': true,
         'show_assetvalue_column': true,
-        'show_renew_column': false,
 
         'remaining_threshold_yellow': 5,
         'remaining_threshold_red': 3,
@@ -200,24 +196,25 @@ var filter = {
         // Hide any at target investment level.
         var invested_td = tr.children[invested_row];
         var invested = str_to_pounds(invested_td.textContent) || 0;
-        var target_lower = parseFloat(GM_getValue('investment_target'));
-        var target_upper = target_lower * target_upper_spread;
-        if (amnt_available < 1) {
-            // none available -> mark as hit (hide).
-            tr.dataset.target = 'hit';
-        } else if (invested > target_upper) {
+        var target_upper = parseFloat(GM_getValue('investment_target'));
+        if (invested > target_upper) {
             // heavy -> make red
             invested_td.style["background-color"] = '#ffdddd';
             tr.dataset.target = 'above';
-        } else if (invested > target_lower) {
-            // light -> make orange
-            invested_td.style["background-color"] = '#fff6db';
-            tr.dataset.target = 'hit';
-        } else if (invested < target_lower) {
+        } else if (tr.dataset.target === 'hit') {  // If already marked as hit, colour orange to indicate we should probably start selling off.
+            if (invested > 0) {
+                invested_td.style["background-color"] = '#fff6db';
+            }
+        } else if (invested < target_upper) {
             // light -> make green
             invested_td.style["background-color"] = '#ddffdd';
             tr.dataset.target = 'below';
         } else {
+            tr.dataset.target = 'hit';
+        }
+
+        if (amnt_available < 1) {
+            // None available -> mark as hit (hide), regardless of what we decided above.
             tr.dataset.target = 'hit';
         }
     },
